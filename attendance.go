@@ -36,7 +36,7 @@ type AttendanceStore struct {
 	db *sqlx.DB
 }
 
-func (s AttendanceStore) GetAll([]Attendance, error) {
+func (s AttendanceStore) GetAll() ([]Attendance, error) {
 	return []Attendance{}, nil
 }
 
@@ -72,4 +72,13 @@ type Attendance struct {
 	Date time.Time `json:"date"`
 	// Cub is the cub the attendance entity applies to.
 	Cub Cub
+}
+
+type AttendanceHandler struct {
+	cubStore        CubStore
+	attendanceStore AttendanceStore
+}
+
+func NewAttendanceHandler(cubStore CubStore, attendanceStore AttendanceStore) AttendanceHandler {
+	return AttendanceHandler{cubStore, attendanceStore}
 }

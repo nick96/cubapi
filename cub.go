@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/nick96/cubapi/model"
 )
-
 
 // Cub represents a cub.
 type Cub struct {
@@ -16,3 +16,17 @@ type Cub struct {
 	// Attendances is the list of zero or more recorded attendances for the cub.
 	Attendances []Attendance `json:"attendances"`
 }
+
+type CubStore struct {
+	DB *sqlx.DB
+}
+
+type CubsHandler struct {
+	cubStore CubStoreReader
+}
+
+type CubHandler struct {
+	cubStore CubStoreReader
+}
+
+

@@ -5,37 +5,40 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-
-	"github.com/nick96/cubapi/repo"
+	"github.com/nick96/cubapi/db"
 )
 
 func main() {
-	db, err := DBConn(os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_NAME"), os.Getenv("DB_HOST"))
+	handle, err := db.DBConn(os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_NAME"), os.Getenv("DB_HOST"))
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 	}
-	defer db.Close()
+	defer handle.Close()
 	log.Printf("Successfully connected to database")
 
-	err = InitDB(db)
+	err = db.InitDB(handle)
 	if err != nil {
 		log.Fatalf("Failed to initialise the database: %v", err)
 	}
 	log.Printf("Successfully initialised database")
 
-	cubStore := repo.CubStore{db}
-	attendanceStore := repo.AttendanceStore{db}
+	cubStore := CubStore{handle}
+	attendanceStore := AttendanceStore{handle}
+
+	attendanceHandler := NewAttendanceHandler(cubStore, attendanceStore)
+	cubsHandler := NewCubsHandler(cubStore)
 
 	router := gin.Default()
-	router.POST("/attendance", AttendanceHandler(cubStore, attendanceStore))
+	router.POST("/attendance", attendanceHandler)
+	router.GET("/cub", cubsHandler)
+	router.GET("/cub/:id", cubHandlerji)
 
 	port := os.Getenv("APP_PORT")
-	if strings.TrimSpace(port) {
+	if strings.TrimSpace(port) == "" {
 		port = "8080"
 	}
 	log.Printf("Starting app on port %s", port)
