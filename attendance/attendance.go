@@ -1,10 +1,10 @@
-package main
+package attendance
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/nick96/cubapi/model"
 )
 
 // AttendanceStorer is the interface an object that stores attendance must
@@ -34,6 +34,10 @@ type AttendanceStorer interface {
 // accesses a real database.
 type AttendanceStore struct {
 	db *sqlx.DB
+}
+
+func NewAttendanceStore(db *sqlx.DB) AttendanceStore {
+	return AttendanceStore{db}
 }
 
 func (s AttendanceStore) GetAll() ([]Attendance, error) {
@@ -66,7 +70,7 @@ func (s AttendanceStore) Delete(attendance Attendance) error {
 
 // Attendance represents a single cubs attendance on a given date.
 type Attendance struct {
-	model.Model
+	Model
 
 	// Date of attendance.
 	Date time.Time `json:"date"`
@@ -74,11 +78,15 @@ type Attendance struct {
 	Cub Cub
 }
 
-type AttendanceHandler struct {
+type Handler struct {
 	cubStore        CubStore
 	attendanceStore AttendanceStore
 }
 
-func NewAttendanceHandler(cubStore CubStore, attendanceStore AttendanceStore) AttendanceHandler {
-	return AttendanceHandler{cubStore, attendanceStore}
+func NewHandler(cubStore CubStore, attendanceStore AttendanceStore) Handler {
+	return Handler{cubStore, attendanceStore}
+}
+
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 }

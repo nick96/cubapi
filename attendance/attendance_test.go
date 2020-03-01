@@ -1,4 +1,4 @@
-package main
+package attendance
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/nick96/cubapi/db"
-	"github.com/org/dockertest"
+	"github.com/ory/dockertest"
 )
 
 var dbHandle *sql.DB

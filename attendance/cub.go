@@ -1,13 +1,12 @@
-package main
+package attendance
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/nick96/cubapi/model"
 )
 
 // Cub represents a cub.
 type Cub struct {
-	model.Model
+	Model
 
 	// FirstName is the first name of the cub.
 	FirstName string `json:"first_name"`
@@ -17,16 +16,17 @@ type Cub struct {
 	Attendances []Attendance `json:"attendances"`
 }
 
+type CubStoreReader interface{}
+
 type CubStore struct {
-	DB *sqlx.DB
+	db *sqlx.DB
+}
+
+func NewCubStore(db *sqlx.DB) CubStore {
+	return CubStore{db}
 }
 
 type CubsHandler struct {
 	cubStore CubStoreReader
 }
-
-type CubHandler struct {
-	cubStore CubStoreReader
-}
-
 
