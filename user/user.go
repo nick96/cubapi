@@ -38,7 +38,6 @@ func NewUserRouter(logger *zap.Logger, store UserStorer) func(chi.Router) {
 	service := UserService{store}
 	return func(r chi.Router) {
 		r.Post("/", newUser(logger, service))
-		r.Get("/{userID:[0-9]+}", getUserByID(logger, service))
 	}
 }
 
@@ -91,11 +90,5 @@ func newUser(logger *zap.Logger, service UserService) http.HandlerFunc {
 		logger.Debug("Created new user", zap.String("email", createdUser.Email), zap.Any("userID", createdUser.Id))
 		render.Render(w, r, UserResponse(createdUser))
 		w.WriteHeader(http.StatusCreated)
-	}
-}
-
-func getUserByID(logger *zap.Logger, service UserService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
 	}
 }
