@@ -7,8 +7,9 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/nick96/cubapi/db"
+	"github.com/nick96/cubapi/middleware"
 	"github.com/nick96/cubapi/user"
 	"go.uber.org/zap"
 )
@@ -32,9 +33,9 @@ func main() {
 	store := user.NewStore(dbHandle)
 
 	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
+	router.Use(chimiddleware.RequestID)
+	router.Use(chimiddleware.RealIP)
+	router.Use(middleware.Logger(logger))
 
 	router.Route("/user", user.NewUserRouter(logger, store))
 	router.Route("/auth", user.NewAuthRouter(logger, store))

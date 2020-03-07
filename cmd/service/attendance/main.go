@@ -8,10 +8,15 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/nick96/cubapi/attendance"
 	"github.com/nick96/cubapi/db"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, _ := zap.NewDevelopment()
+	logger = logger.Named("attendance-service")
+
 	dbHandle, err := db.NewConn(
+		logger,
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
 		os.Getenv("DB_NAME"),

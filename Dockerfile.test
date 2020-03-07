@@ -1,0 +1,6 @@
+FROM golang:1.13
+
+WORKDIR /src
+
+ENTRYPOINT ["go", "test", "-v"]
+CMD ["github.com/nick96/cubapi/..."]

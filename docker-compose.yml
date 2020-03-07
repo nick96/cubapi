@@ -22,18 +22,6 @@ services:
       DB_HOST: db
       DB_SSL_MODE: disable
 
-  user-migrate:
-    build:
-      dockerfile: Dockerfile.migrate
-      context: .
-    environment:
-      DB_NAME: users
-      DB_USER: user_svc
-      DB_PASS: password
-      DB_HOST: db
-      DB_SSL_MODE: disable
-    volumes:
-      - "./migrations/user:/migrations"
 
   attendance:
     build:
@@ -47,17 +35,3 @@ services:
       DB_PASS: password
       DB_HOST: db
       DB_SSL_MODE: disable
-
-  attendance-migrate:
-    image: golang:1.13
-    environment:
-      DB_NAME: attendances
-      DB_USER: attendance_svc
-      DB_PASS: password
-      DB_HOST: db
-      DB_SSL_MODE: disable
-    volumes:
-      - "./migrations/attendance:/migrations"
-    command: |
-      goose postgres "user=$$DB_USER dbname=$$DB_NAME password=$$DB_PASS host=$$DB_HOST sslmode=$$DB_SSL_MODE" up && \
-      goose postgres "user=$$DB_USER dbname=$$DB_NAME password=$$DB_PASS host=$$DB_HOST sslmode=$$DB_SSL_MODE" status

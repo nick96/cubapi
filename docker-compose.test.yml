@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+  test:
+    build:
+      dockerfile: Dockerfile.test
+      context: .
+    environment:
+      ATTENDANCE_DB_NAME: attendances
+      USER_DB_NAME: users
+      ATTENDANCE_DB_USER: attendance_svc
+      USER_DB_USER: user_svc
+      DB_PASS: password
+      DB_HOST: db
+      DB_SSL_MODE: disable
+    volumes:
+      - "./:/src:ro"
