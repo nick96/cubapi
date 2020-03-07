@@ -14,6 +14,8 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
+
+
 type ErrorResponse struct {
 	Status  int      `json:"-"`
 	Message string   `json:"message"`
@@ -73,6 +75,9 @@ func ErrForbidden(message string, err security.ClientError) render.Renderer {
 	}
 }
 
+// AuthResponse is a response to a successful authentication request. It
+// contains the `token` field which is the JWT token used on other endpoints
+// that require authentication.
 type AuthResponse struct {
 	Token string `json:"token"`
 }
@@ -82,6 +87,10 @@ func (e *AuthResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// NewAuthRouter creates a router for the authentication endpoints.
+//
+// POST /: Authenticate a user using email and password, and return
+//     a JWT if correct.
 func NewAuthRouter(logger *zap.Logger, store UserStorer) func(chi.Router) {
 	validate := validator.New()
 	authService := AuthService{store}
@@ -122,6 +131,7 @@ func signIn(logger *zap.Logger, validate *validator.Validate, service AuthServic
 			render.Render(w, r, ErrInternal(err))
 			return
 		}
+		defer r.Body.Close()
 
 		var request AuthnRequest
 		err = json.Unmarshal(body, &request)

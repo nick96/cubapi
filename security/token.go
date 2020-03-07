@@ -65,4 +65,3 @@ func (j *JWT) SignedToken(secret string) (string, error) {
 func ValidateToken(token, secret string) error {
 	return nil
 }
-
