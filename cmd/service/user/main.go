@@ -36,6 +36,7 @@ func main() {
 	router.Use(chimiddleware.RequestID)
 	router.Use(chimiddleware.RealIP)
 	router.Use(middleware.Logger(logger))
+	router.Use(middleware.DefaultContentType(logger, "application/json"))
 
 	router.Route("/user", user.NewUserRouter(logger, store))
 	router.Route("/auth", user.NewAuthRouter(logger, store))
