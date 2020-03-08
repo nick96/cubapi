@@ -5,9 +5,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-chi/chi"
+	chimiddleware "github.com/go-chi/middleware"
 	_ "github.com/lib/pq"
 	"github.com/nick96/cubapi/attendance"
 	"github.com/nick96/cubapi/db"
+	"github.com/nick96/cubapi/middleware"
 	"go.uber.org/zap"
 )
 
@@ -24,14 +27,23 @@ func main() {
 		os.Getenv("DB_SSL_MODE"),
 	)
 	if err != nil {
-		log.Fatalf("Failed to connect to databse on host %s: %v", os.Getenv("DB_HOST"), err)
+		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
 	attendanceStore := attendance.NewAttendanceStore(dbHandle)
 	cubStore := attendance.NewCubStore(dbHandle)
 
+	router := chi.NewRouter()
+	router.Use(chimiddleware.RequestID)
+	router.Use(chimiddleware.RealIP)
+	router.Use(middleware.Logger(logger))
+	router.Use(middleware.DefaultContentType(logger, "application/json"))
+
 	handler := attendance.NewHandler(cubStore, attendanceStore)
 
-	log.Printf("Successfully start attendance service")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	logger.Info("Successfully start attendance service")
+	err = http.ListenAndServe(":8080", router)
+	if err != nil {
+		log.Fatal("Service exited with an error", zap.Error(err))
+	}
 }

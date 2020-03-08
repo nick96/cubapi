@@ -27,7 +27,7 @@ func main() {
 		os.Getenv("DB_SSL_MODE"),
 	)
 	if err != nil {
-		logger.Fatal("Failed to connect to database")
+		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
 	store := user.NewStore(dbHandle)
