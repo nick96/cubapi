@@ -3,13 +3,15 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import {
     Grid, TextField, Button,
     Container, AppBar, Toolbar, Typography,
-    CssBaseline, Dialog, DialogContent, DialogTitle, DialogActions, DialogProps
+    CssBaseline, Dialog, DialogContent, DialogTitle, DialogActions, DialogProps,
+    Paper, Box
 } from '@material-ui/core';
 import { createStyles, makeStyles, Theme, createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import { yellow } from "@material-ui/core/colors";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import './App.css';
+import "typeface-roboto";
 
 const USER_SERVICE_URI = process.env.REACT_APP_USER_SERVICE_URI;
 
@@ -35,6 +37,11 @@ const useStyles = makeStyles((theme: Theme) => createStyles({
     },
     submitButton: {
         flexGrow: 1,
+    },
+    blurb: {
+        marginTop: theme.spacing(10),
+        margin: theme.spacing(50),
+        textAlign: "left"
     }
 }));
 
@@ -255,13 +262,23 @@ const Home: FunctionComponent = () => {
         <div className={classes.root}>
             <AppBar position="static" color="primary">
                 <Toolbar>
-                    <Typography variant="h4" className={classes.title}>Home</Typography>
+                    <Typography variant="h4" className={classes.title}></Typography>
                     <Button color="inherit" onClick={handleToggleSignUp}>Sign Up</Button>
                     <Button color="inherit" onClick={handleToggleLogin}>Login</Button>
                 </Toolbar>
             </AppBar>
             <SignUpDialog className={classes.backdrop} open={openSignUp} onClose={handleCloseSignUp} />
             <LoginDialog onClose={handleCloseLogin} open={openLogin} className={classes.backdrop} />
+            <Typography variant="h1" className={classes.title}>Badgerer</Typography>
+            <Typography variant="subtitle1">
+                Removing the work of managing badgework and attendance for scout Leaders.
+            </Typography>
+            <Box className={classes.blurb}>
+                <Typography variant="body1">
+                    Badgerer handles the book keeping around badgework and attendance. You'll no longer have to update your records for all scouts that,
+                    attended. Instead, you just submit who attended and what badgework items were completed - badgerer handles the rest!
+                </Typography>
+            </Box>
         </div>
     );
 }
