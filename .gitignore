@@ -3,3 +3,5 @@
 certs/
 /bin/
 /node_modules/
+/frontend/.env
+/frontend/dist/

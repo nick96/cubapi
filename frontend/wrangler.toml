@@ -1,0 +1,10 @@
+account_id="4fe91f8494e3a9b0af0c4e9dbab83e0d"
+name = "cubapi"
+type = "webpack"
+router = ""
+workers_dev = true
+zone_id = "2f266ad32ce8e404b46f39dae3b557ff"
+
+[site]
+bucket = "./build"
+entry-point = "workers-site"
