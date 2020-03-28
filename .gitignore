@@ -5,3 +5,6 @@ certs/
 /node_modules/
 /frontend/.env
 /frontend/dist/
+.terraform/
+*.tfstate*
+/infra/backend/variables.auto.tfvars
