@@ -8,3 +8,5 @@ certs/
 .terraform/
 *.tfstate*
 /infra/backend/variables.auto.tfvars
+/infra/packer/secret.json
+/infra/secret.tfvars
