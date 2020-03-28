@@ -1,22 +1,23 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi"
-	chimiddleware "github.com/go-chi/middleware"
 	_ "github.com/lib/pq"
-	"github.com/nick96/cubapi/attendance"
+
+	"github.com/go-chi/chi"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/nick96/cubapi/db"
+	"github.com/nick96/cubapi/db/migrate"
 	"github.com/nick96/cubapi/middleware"
+	"github.com/nick96/cubapi/user"
 	"go.uber.org/zap"
 )
 
 func main() {
 	logger, _ := zap.NewDevelopment()
-	logger = logger.Named("attendance-service")
+	logger = logger.Named("user-service")
 
 	dbHandle, err := db.NewConn(
 		logger,
@@ -30,8 +31,12 @@ func main() {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
-	attendanceStore := attendance.NewAttendanceStore(dbHandle)
-	cubStore := attendance.NewCubStore(dbHandle)
+	migrator := migrate.NewMigrator(dbHandle.DB, logger)
+	if err := migrator.Apply(Migrations...); err != nil {
+		logger.Fatal("Failed to initialise database", zap.Error(err))
+	}
+
+	store := user.NewStore(dbHandle)
 
 	router := chi.NewRouter()
 	router.Use(chimiddleware.RequestID)
@@ -39,11 +44,9 @@ func main() {
 	router.Use(middleware.Logger(logger))
 	router.Use(middleware.DefaultContentType(logger, "application/json"))
 
-	handler := attendance.NewHandler(cubStore, attendanceStore)
+	router.Route("/user", user.NewUserRouter(logger, store))
+	router.Route("/auth", user.NewAuthRouter(logger, store))
 
-	logger.Info("Successfully start attendance service")
-	err = http.ListenAndServe(":8080", router)
-	if err != nil {
-		log.Fatal("Service exited with an error", zap.Error(err))
-	}
+	logger.Info("Successfully started user service")
+	logger.Fatal("Service exited with error", zap.Error(http.ListenAndServe(":8080", router)))
 }

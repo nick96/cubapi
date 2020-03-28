@@ -1,22 +1,22 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 
-	_ "github.com/lib/pq"
-
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
+	_ "github.com/lib/pq"
+	"github.com/nick96/cubapi/attendance"
 	"github.com/nick96/cubapi/db"
 	"github.com/nick96/cubapi/middleware"
-	"github.com/nick96/cubapi/user"
 	"go.uber.org/zap"
 )
 
 func main() {
 	logger, _ := zap.NewDevelopment()
-	logger = logger.Named("user-service")
+	logger = logger.Named("attendance-service")
 
 	dbHandle, err := db.NewConn(
 		logger,
@@ -30,7 +30,8 @@ func main() {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
-	store := user.NewStore(dbHandle)
+	// attendanceStore := attendance.NewAttendanceStore(dbHandle)
+	// cubStore := attendance.NewCubStore(dbHandle)
 
 	router := chi.NewRouter()
 	router.Use(chimiddleware.RequestID)
@@ -38,9 +39,12 @@ func main() {
 	router.Use(middleware.Logger(logger))
 	router.Use(middleware.DefaultContentType(logger, "application/json"))
 
-	router.Route("/user", user.NewUserRouter(logger, store))
-	router.Route("/auth", user.NewAuthRouter(logger, store))
+	// handler := attendance.NewHandler(cubStore, attendanceStore)
+	// router.Route("/attendance", handler)
 
-	logger.Info("Successfully started user service")
-	logger.Fatal("Service exited with error", zap.Error(http.ListenAndServe(":8080", router)))
+	logger.Info("Successfully start attendance service")
+	err = http.ListenAndServe(":8080", router)
+	if err != nil {
+		log.Fatal("Service exited with an error", zap.Error(err))
+	}
 }
