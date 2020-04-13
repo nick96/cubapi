@@ -8,7 +8,7 @@
     traefik_ca_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
 
     domain: "bagheera.nspain.dev"
-    do_token: "a5a07c27a8980e4838b8cc64e8a1adbfbcacec409fe9a9125d6099fe343754bb"
+    do_token: ""
 
     docker_compose_version: "1.24.1"
     docker_compose_path: /usr/local/bin/docker-compose
