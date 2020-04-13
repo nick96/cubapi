@@ -1,0 +1,62 @@
+{
+    "variables": {
+        "do_token": "",
+        "version": ""
+    },
+    "builders": [
+        {
+            "type": "digitalocean",
+            "ssh_username": "root",
+            "api_token": "{{ user `do_token` }}",
+            "image": "flatcar-stable",
+            "region": "sgp1",
+            "size": "s-vcpu-1gb",
+            "snapshot_name": "bagheera={{ user `version` }}"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "file",
+            "source": "../docker-compose.yml",
+            "destination": "/opt/docker-compose.yml"
+        },
+        {
+            "type": "file",
+            "source": "baghera.service",
+            "destination": "/etc/systemd/system/bagheera.service"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "sudo apt-get update",
+                "sudo apt-get install -y apt-transport-https ca-certificates",
+                "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
+                "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
+                "sudo apt-get update",
+                "sudo apt-get install -y docker"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "sudo curl -L \"https://github.com/docker/compose/releases/download/1.10.0/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose",
+                "sudo chmod +x /usr/local/bin/docker-compose"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "systemctl enable docker",
+                "systemctl start docker"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": ["systemctl enable bagheera"]
+        },
+        {
+            "type": "shell",
+            "inline": ["docker-compose -f /opt/docker-compose.yml pull"]
+        }
+    ]
+}

@@ -35,3 +35,13 @@ variable "allowed_tag" {
 variable "db_name" {
   type = string
 }
+
+// Name of the volume to create
+variable "volume_name" {
+  type = string
+}
+
+// Size of the volume to create
+variable "volume_size" {
+  type = number
+}

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -13,8 +14,6 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 )
-
-
 
 type ErrorResponse struct {
 	Status  int      `json:"-"`
@@ -68,10 +67,14 @@ func ErrInternalWithMessage(message string, err error) render.Renderer {
 }
 
 func ErrForbidden(message string, err security.ClientError) render.Renderer {
+	var safeError string
+	if err != nil {
+		safeError = err.SafeError()
+	}
 	return &ErrorResponse{
 		Message: message,
 		Status:  http.StatusForbidden,
-		Error:   err.SafeError(),
+		Error:   safeError,
 	}
 }
 
@@ -184,6 +187,20 @@ func signIn(logger *zap.Logger, validate *validator.Validate, service AuthServic
 		}
 
 		logger.Info("Successfully retrieved auth token for user", zap.String("email", user.Email))
+		// Set the cookie header for use in web app
+		cookie := &http.Cookie{
+			Name:     "jwt",
+			Value:    token,
+			HttpOnly: true,
+			Path:     "/",
+			SameSite: http.SameSiteNoneMode,
+			Expires:  time.Now().Add(time.Hour * 24),
+			Secure:   false, // TODO: Set this to secure for prod
+			Domain:   "localhost.com",
+		}
+		http.SetCookie(w, cookie)
+		logger.Debug("Set cookie", zap.String("cookie", cookie.String()))
+
 		resp := &AuthResponse{Token: token}
 		render.Render(w, r, resp)
 	}

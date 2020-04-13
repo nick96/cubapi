@@ -40,7 +40,7 @@ func (s AuthService) AuthenticateUser(email, password string) (User, security.Cl
 
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(user.Password),
-		[]byte(password+user.Salt),
+		[]byte(password),
 	)
 	if err != nil {
 		// Specifically return an empty user here to prevent the real user being

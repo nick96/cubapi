@@ -1,0 +1,45 @@
+version: "3.3"
+
+services:
+  # Stub out traefik for dev
+  traefik:
+    ports:
+      - 1234
+  frontend:
+    build:
+      dockerfile: ../Dockerfile.frontend
+      context: frontend
+    ports:
+      - "8080:80"
+    environment:
+      REACT_APP_AUTOCRAT_SERVICE_URI: "autocrat:8080"
+  autocrat:
+    container_name: autocrat
+    build:
+      dockerfile: Dockerfile.autocrat
+      context: .
+    environment:
+      DB_USER: bagheera
+      DB_PASS: bagheera
+      DB_NAME: bagheera
+      DB_HOST: db
+      DB_SSL_MODE: disable
+      JWT_SECRET: "thisisatestsecretusedtosignedthejwtsinproductionwellusearandomlygeneratedonebutthiswillworkfordev"
+    ports:
+      - "8081:8081"
+  db:
+    image: postgres:11
+    environment:
+      POSTGRES_USER: bagheera
+      POSTGRES_PASSWORD: bagheera
+      POSTGRES_DB: bagheera
+    volumes:
+      - "data-v1:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+
+volumes:
+  data-v1:
+      
+    
+      

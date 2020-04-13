@@ -24,9 +24,8 @@ func TestMain(m *testing.M) {
 func TestAuthenticateUser(t *testing.T) {
 	defer cleanStore()
 	email := "test@test.com"
-	salt := "salt"
 	password := "password"
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+salt), passwordHashCost)
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), passwordHashCost)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +34,6 @@ func TestAuthenticateUser(t *testing.T) {
 		FirstName: "firstName",
 		LastName:  "lastName",
 		Password:  string(hashPassword),
-		Salt:      salt,
 	}
 	id, err := store.AddUser(user)
 	if err != nil {
@@ -111,7 +109,6 @@ func TestGetToken(t *testing.T) {
 		FirstName: "test",
 		LastName:  "test",
 		Password:  "testpassword",
-		Salt:      "password",
 	}
 
 	token, err := authService.GetToken(user)

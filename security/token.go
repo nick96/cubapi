@@ -1,14 +1,20 @@
 package security
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	gojwt "github.com/dgrijalva/jwt-go"
 )
 
 type JWT struct {
 	claims map[string]interface{}
+}
+
+type Token struct {
+	Email string
 }
 
 func (j *JWT) Subject(subject string) *JWT {
@@ -62,6 +68,19 @@ func (j *JWT) SignedToken(secret string) (string, error) {
 
 // ValidateToken validates the given token using the given secret. If the token
 // is not valid in any way, an error is returned, otherwise the error is nil.
-func ValidateToken(token, secret string) error {
-	return nil
+func ValidateToken(token, secret string) (Token, error) {
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return Token{}, fmt.Errorf("token parsing failed: %w", err)
+	}
+
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
+		return Token{Email: claims["aud"].(string)}, nil
+	}
+	return Token{}, fmt.Errorf("token is not valid")
 }

@@ -24,3 +24,13 @@ variable "tags" {
 variable "image" {
   type = string
 }
+
+// Name of the volume letsencrypt related stuff is stored on
+variable "letsencrypt_volume_id" {
+  type = string
+}
+
+// Port the database is on to allow connecting to it through the firewall.
+variable "database_port" {
+  type = string
+}

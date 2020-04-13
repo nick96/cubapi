@@ -1,37 +1,72 @@
-version: '3.4'
+
+version: "3.3"
 
 services:
-  db:
-    image: postgres
-    environment:
-      POSTGRES_USER: app_user
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
+  traefik:
+    image: "traefik:v2.0.0"
+    command:
+      - "--log.level=DEBUG"
 
-  user:
-    build:
-      dockerfile: Dockerfile.user
-      context: .
-    ports:
-      - "8080:8080"
-    environment:
-      DB_NAME: users
-      DB_USER: user_svc
-      DB_PASS: password
-      DB_HOST: db
-      DB_SSL_MODE: disable
+      # Enable the API with dashboard so we can check on the proxy
+      - "--api=true"
+      - "--api.dashboard=true"
 
+      # Use the docker daemon to find this but only when they're explicitly
+      # enable to be router by traefik
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
 
-  attendance:
-    build:
-      dockerfile: Dockerfile.attendance
-      context: .
+      # Allow entry  via port 80  and 443. Anything via  port 80 (HTTP)  will be
+      # routed to 443 (HTTPS).
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+
+      # Use the DNS challenge for getting certs from Lets Encrypt. This allows
+      # us to get wildcard certs.
+      - "--certificatesresolvers.dnschallenge.acme.dnschallenge=true"
+      - "--certificatesresolvers.dnschallenge.acme.dnschallenge.provider=digitalocean"
+      - "--certificatesresolvers.dnschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.dnschallenge.acme.email=nicholas.spain96@gmail.com"
+      - "--certificatesresolvers.dnschallenge.acme.storage=/letsencrypt/acme.json"
     ports:
-      - "8081:8080"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/mnt/letsencrypt:/letsencrypt"
+    labels:
+      # Redirect HTTP to HTTPS
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https@docker"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+      # Make the traefik dashboard available under HTTPS
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.bagheera.nickspain.dev`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=dnschallenge"
+      - "traefik.http.routers.traefik.service=api@internal"
+
     environment:
-      DB_NAME: attendances
-      DB_USER: attendance_svc
-      DB_PASS: password
-      DB_HOST: db
-      DB_SSL_MODE: disable
+      DO_AUTH_TOKEN: "{{ do_token }}"
+
+  frontend:
+    image: "quay.io/nspain/bagheera-frontend:latest"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`bagheera.nickspain.dev`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=dnschallenge"
+    environment:
+      REACT_APP_AUTOCRAT_SERVICE_URI: "autocrat:8080"
+
+  autocrat:
+    image: "quay.io/nspain/bagheera-bagheera:latest"
+    environment:
+      DB_USER: autocrat
+      DB_PASS: $AUTOCRAT_DB_PASS
+      DB_NAME: bagheera_db
+      DB_HOST: "{{ database_host }}"
+      DB_SSL_MODE: required
+      JWT_SECRET: "{{ jwt_secret }}"

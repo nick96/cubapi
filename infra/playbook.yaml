@@ -1,0 +1,37 @@
+---
+- hosts: all
+  become: true
+  vars:
+    traefik_log_level: "DEBUG"
+    traefik_api_insecure: "true"
+    traefik_email: "nicholas.spain96@gmail.com"
+    traefik_ca_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+    domain: "bagheera.nspain.dev"
+    do_token: "a5a07c27a8980e4838b8cc64e8a1adbfbcacec409fe9a9125d6099fe343754bb"
+
+    docker_compose_version: "1.24.1"
+    docker_compose_path: /usr/local/bin/docker-compose
+
+    docker_apt_release_channel: stable
+    docker_apt_arch: amd64
+    docker_apt_repository: >
+      deb [arch={{ docker_apt_arch }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} {{ docker_apt_release_channel }}
+    docker_apt_gpg_key: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+
+    bagheera_service_template: "bagheera.service.j2"
+    docker_compose_template: "../docker-compose.yml"
+
+  tasks:
+    - name: Add docker-compose.yml
+      template:
+        src: "{{ docker_compose_template }}"
+        dest: /opt/docker-compose.yml
+        mode: 0644
+
+    - name: Copy service file
+      template:
+        src: "{{ bagheera_service_template }}"
+        dest: /etc/systemd/system/bagheera.service
+
+    

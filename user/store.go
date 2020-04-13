@@ -32,7 +32,7 @@ func NewStore(db *sqlx.DB) UserStorer {
 
 // FindByEmail finds a user by their email.
 func (s UserStore) FindByEmail(email string) (user User, found bool, err error) {
-	query := `SELECT * FROM users WHERE email = $1;`
+	query := `SELECT * FROM autocrat.users WHERE email = $1;`
 	err = s.db.QueryRowx(query, email).StructScan(&user)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -48,12 +48,12 @@ func (s UserStore) FindByEmail(email string) (user User, found bool, err error) 
 func (s UserStore) AddUser(user User) (int64, error) {
 	var id int64
 	query := `
-	INSERT INTO users (id, email, firstname, lastname, password, salt)
-	VALUES (DEFAULT, $1, $2, $3, $4, $5)
+	INSERT INTO autocrat.users (id, email, firstname, lastname, password)
+	VALUES (DEFAULT, $1, $2, $3, $4) 
 	RETURNING id;
 	`
 	err := s.db.
-		QueryRow(query, user.Email, user.FirstName, user.LastName, user.Password, user.Salt).
+		QueryRow(query, user.Email, user.FirstName, user.LastName, user.Password).
 		Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert user into store: %w", err)

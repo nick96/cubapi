@@ -1,0 +1,13 @@
+[Unit]
+Description=Bagheera services in docker-compose
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+WorkingDirectory=/opt
+ExecStart=/usr/local/bin/docker-compose up
+ExecStop=/usr/local/bin/docker-compose down -v
+
+[Install]
+WantedBy=multi-user.target

@@ -12,6 +12,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/go-chi/chi v4.0.3+incompatible
+	github.com/go-chi/cors v1.1.0
 	github.com/go-chi/render v1.0.1
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect

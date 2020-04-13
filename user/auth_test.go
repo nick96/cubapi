@@ -48,14 +48,13 @@ func TestSignInExistingUser(t *testing.T) {
 	service := AuthService{store}
 	handler := signIn(logger, NewValidator(), service)
 
-	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("password"+"salt"), security.PasswordCost)
+	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("password"), security.PasswordCost)
 
 	usr := User{
 		Email:     reqContent.Email,
 		FirstName: "Bobby",
 		LastName:  "Tables",
 		Password:  string(hashedPw),
-		Salt:      "salt",
 	}
 	store.AddUser(usr)
 	handler(w, req)

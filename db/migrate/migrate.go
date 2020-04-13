@@ -40,7 +40,7 @@ type AppliedMigration struct {
 	Description string
 	// Checksum is a SHA256 checksum of the SQL script applied in the
 	// migration.
-	Checksum [sha256.Size]byte
+	Checksum []byte
 }
 
 // NewMigrator returns a new migrator with the given DB handle and logger.
@@ -81,12 +81,17 @@ CREATE TABLE IF NOT EXISTS migrations (
 // That is, migrations are only applied if:
 //     `migrations.DateCreated > latestMigration.DateCreated`
 func (m Migrator) Apply(migrations ...Migration) error {
-	m.Init()
+	err := m.Init()
+	if err != nil {
+		return err
+	}
 
 	latestMigration, err := m.latestMigration()
 	if err != nil {
 		return err
 	}
+
+	m.logger.Debug("Retrieved most recently applied migration", zap.Any("migration", latestMigration))
 
 	migrationsToApply := migrationsAfter(latestMigration, migrations...)
 	m.logger.Info("Applying migrations", zap.Int("count", len(migrationsToApply)))
@@ -127,7 +132,7 @@ VALUES($1, $2, now(), $3, $4);
 func (m Migrator) latestMigration() (*AppliedMigration, error) {
 	query := `
 SELECT version, date_created, date_applied, description, checksum FROM migrations
-ORDER BY version ASC LIMIT 1;
+ORDER BY version DESC LIMIT 1;
 `
 	row := m.db.QueryRow(query)
 	var latest AppliedMigration

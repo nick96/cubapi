@@ -25,3 +25,9 @@ resource "digitalocean_database_firewall" "fw" {
     value = var.allowed_tag
   }
 }
+
+resource "digitalocean_volume" "letsencrypt-vol" {
+  region = var.region
+  name   = var.volume_name
+  size   = var.volume_size
+}

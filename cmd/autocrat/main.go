@@ -11,6 +11,7 @@ import (
 	"github.com/nick96/cubapi/db"
 	"github.com/nick96/cubapi/db/migrate"
 	"github.com/nick96/cubapi/middleware"
+	"github.com/nick96/cubapi/monitor"
 	"github.com/nick96/cubapi/user"
 	"go.uber.org/zap"
 )
@@ -43,10 +44,12 @@ func main() {
 	router.Use(chimiddleware.RealIP)
 	router.Use(middleware.Logger(logger))
 	router.Use(middleware.DefaultContentType(logger, "application/json"))
+	router.Use(middleware.CORSPreflight(logger))
 
 	router.Route("/user", user.NewUserRouter(logger, store))
 	router.Route("/auth", user.NewAuthRouter(logger, store))
+	router.Route("/healthz", monitor.NewHealthRouter(logger, monitor.DBComponent{dbHandle}))
 
 	logger.Info("Successfully started user service")
-	logger.Fatal("Service exited with error", zap.Error(http.ListenAndServe(":8080", router)))
+	logger.Fatal("Service exited with error", zap.Error(http.ListenAndServe(":8081", router)))
 }

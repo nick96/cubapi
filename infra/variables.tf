@@ -3,6 +3,16 @@ variable "do_token" {
 }
 
 variable "do_region" {
-  type = string
+  type    = string
   default = "sgp1"
+}
+
+variable "letsencrypt_volume_name" {
+  type    = string
+  default = "letsencrypt"
+}
+
+variable "database_tag" {
+  type    = string
+  default = "bagheera-db"
 }

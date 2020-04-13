@@ -15,14 +15,14 @@ type ClientError interface {
 
 type clientError struct {
 	Message string
-	Cause error
+	Cause   error
 }
 
 // NewClientError creates a new client error.
 func NewClientError(message string, err error) ClientError {
 	return &clientError{
 		Message: message,
-		Cause: err,
+		Cause:   err,
 	}
 }
 

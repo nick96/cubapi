@@ -1,5 +1,6 @@
-import React, { FunctionComponent } from 'react';
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import React, { FunctionComponent, useState, Dispatch, SetStateAction } from 'react';
+
+import { BrowserRouter as Router, Switch, Route, RouteProps, Redirect } from "react-router-dom";
 import {
     Grid, TextField, Button,
     Container, AppBar, Toolbar, Typography,
@@ -13,7 +14,8 @@ import * as Yup from "yup";
 import './App.css';
 import "typeface-roboto";
 
-const USER_SERVICE_URI = process.env.REACT_APP_USER_SERVICE_URI;
+/* const AUTOCRAT_SERVICE_URI = process.env.REACT_APP_AUTOCRAT_SERVICE_URI; */
+const AUTOCRAT_SERVICE_URI = "http://localhost.com:8081";
 
 const theme = createMuiTheme({
     palette: {
@@ -45,16 +47,50 @@ const useStyles = makeStyles((theme: Theme) => createStyles({
     }
 }));
 
+
+interface ProtectedRouteProps extends RouteProps {
+    isAuthenticated: boolean;
+}
+
+const ProtectedRoute: FunctionComponent<ProtectedRouteProps> = (props) => {
+    if (props.isAuthenticated) {
+        return <Route {...props} />;
+    }
+    return <Redirect to="/login"/>;
+}
+
 function App() {
+    const [isAuthd, setIsAuthd] = useState(false);
+
+    fetch(`${AUTOCRAT_SERVICE_URI}/user/me`, {
+        method: "GET",
+        mode: "cors",
+        credentials: "same-origin",
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("jwt")}`
+        },
+    })
+        .then(resp => {
+            if (resp.status == 401) {
+                setIsAuthd(false);
+            } else {
+                setIsAuthd(true);
+            }
+        }).catch(_ => setIsAuthd(false));
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <div className="App">
                 <Router>
                     <Switch>
-                        <Route exact path="/">
-                            <Home />
+                        <Route path="/login" >
+                            <Login setLoggedIn={setIsAuthd} isLoggedIn={isAuthd} />
                         </Route>
+
+                        <ProtectedRoute exact path="/" isAuthenticated={ isAuthd }>
+                            <Home />
+                        </ProtectedRoute>
                     </Switch>
                 </Router>
             </div>
@@ -62,17 +98,19 @@ function App() {
     );
 }
 
+
 interface SignInFormErrors {
     email: string | null,
     password: string | null,
 }
 
 interface LoginDialogProps extends DialogProps {
+    setLoggedIn: (val: boolean) => void;
 }
 
-const LoginDialog: FunctionComponent<LoginDialogProps> = (props) => {
+const LoginDialog: FunctionComponent<LoginDialogProps> = ({setLoggedIn, ...props}) => {
     const classes = useStyles();
-    const [loggedIn, setLoggedIn] = React.useState(false);
+    /* const [loggedIn, setLoggedIn] = React.useState(false); */
     const [loginError, setLoginError] = React.useState("");
     const formik = useFormik({
         initialValues: {
@@ -80,30 +118,35 @@ const LoginDialog: FunctionComponent<LoginDialogProps> = (props) => {
             password: "",
         },
         onSubmit: values => {
-            fetch(`${USER_SERVICE_URI}/auth`, {
+            fetch(`${AUTOCRAT_SERVICE_URI}/auth`, {
                 method: "POST",
                 mode: "cors",
+                credentials: "same-origin",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("jwt")}`
                 },
                 body: JSON.stringify(values),
             })
                 .then(resp => {
                     if (resp.ok) {
                         setLoggedIn(true);
+                        resp.json().then(json => {
+                            localStorage.setItem("jwt", json.token)
+                        })
                     } else {
                         setLoggedIn(false);
                         resp.json().then(json => {
                             setLoginError(json.message);
                         }).catch(error => {
-                            console.log(error);
+                            console.error(`Login failed due to error parsing JSON: ${error}`);
                             setLoggedIn(false);
                             setLoginError("There was a problem logging in");
                         });
                     }
                 })
                 .catch(error => {
-                    console.log(error);
+                    console.error(`Failed to login: ${error}`);
                     setLoggedIn(false);
                     setLoginError("There was a problem logging in")
                 });
@@ -160,7 +203,6 @@ const LoginDialog: FunctionComponent<LoginDialogProps> = (props) => {
 interface SignUpDialogProps extends DialogProps { }
 
 const SignUpDialog: FunctionComponent<SignUpDialogProps> = (props) => {
-    console.log(props)
     const classes = useStyles();
     const [signedUp, setSignedUp] = React.useState(false);
     const [signUpError, setSignUpError] = React.useState("");
@@ -172,11 +214,13 @@ const SignUpDialog: FunctionComponent<SignUpDialogProps> = (props) => {
             password: "",
         },
         onSubmit: values => {
-            fetch(`${USER_SERVICE_URI}/auth`, {
+            fetch(`${AUTOCRAT_SERVICE_URI}/user`, {
                 method: "POST",
                 mode: "cors",
+                credentials: "same-origin",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("jwt")}`
                 },
                 body: JSON.stringify(values),
             })
@@ -188,14 +232,14 @@ const SignUpDialog: FunctionComponent<SignUpDialogProps> = (props) => {
                         resp.json().then(json => {
                             setSignUpError(json.message);
                         }).catch(error => {
-                            console.log(error);
+                            console.error(`Login failed to due to error parsing JSON: ${error}`);
                             setSignedUp(false);
                             setSignUpError("There was a problem signing up");
                         });
                     }
                 })
                 .catch(error => {
-                    console.log(error);
+                    console.error(`Login failed: ${error}`);
                     setSignedUp(false);
                     setSignUpError("There was a problem signing up");
                 });
@@ -246,8 +290,12 @@ const SignUpDialog: FunctionComponent<SignUpDialogProps> = (props) => {
     )
 }
 
+interface LoginProps {
+    setLoggedIn: Dispatch<SetStateAction<boolean>>;
+    isLoggedIn: boolean;
+}
 
-const Home: FunctionComponent = () => {
+const Login: FunctionComponent<LoginProps> = ({setLoggedIn, isLoggedIn}) => {
     const classes = useStyles();
     const [openSignUp, setSignUp] = React.useState(false);
     const [openLogin, setLogin] = React.useState(false);
@@ -258,29 +306,47 @@ const Home: FunctionComponent = () => {
     const handleCloseLogin = () => setLogin(false);
     const handleToggleLogin = () => setLogin(!openLogin);
 
+    if (!isLoggedIn) {
+        const loginPage = (
+            <div className={classes.root}>
+                <AppBar position="static" color="primary">
+                    <Toolbar>
+                        <Typography variant="h4" className={classes.title}></Typography>
+                        <Button color="inherit" onClick={handleToggleSignUp}>Sign Up</Button>
+                        <Button color="inherit" onClick={handleToggleLogin}>Login</Button>
+                    </Toolbar>
+                </AppBar>
+                <SignUpDialog className={classes.backdrop} open={openSignUp} onClose={handleCloseSignUp} />
+                <LoginDialog setLoggedIn={setLoggedIn} onClose={handleCloseLogin} open={openLogin} className={classes.backdrop} />
+                <Typography variant="h1" className={classes.title}>Badgerer</Typography>
+                <Typography variant="subtitle1">
+                    Removing the work of managing badgework and attendance for scout Leaders.
+                </Typography>
+                <Box className={classes.blurb}>
+                    <Typography variant="body1">
+                        Badgerer handles the book keeping around badgework and attendance. You'll no longer have to update your records for all scouts that,
+                        attended. Instead, you just submit who attended and what badgework items were completed - badgerer handles the rest!
+                    </Typography>
+                </Box>
+            </div>
+        );
+        return loginPage;
+    }
+    return <Redirect to="/"/>
+}
+
+const Home: FunctionComponent = () => {
+    const classes = useStyles();
     return (
         <div className={classes.root}>
             <AppBar position="static" color="primary">
                 <Toolbar>
                     <Typography variant="h4" className={classes.title}></Typography>
-                    <Button color="inherit" onClick={handleToggleSignUp}>Sign Up</Button>
-                    <Button color="inherit" onClick={handleToggleLogin}>Login</Button>
                 </Toolbar>
             </AppBar>
-            <SignUpDialog className={classes.backdrop} open={openSignUp} onClose={handleCloseSignUp} />
-            <LoginDialog onClose={handleCloseLogin} open={openLogin} className={classes.backdrop} />
             <Typography variant="h1" className={classes.title}>Badgerer</Typography>
-            <Typography variant="subtitle1">
-                Removing the work of managing badgework and attendance for scout Leaders.
-            </Typography>
-            <Box className={classes.blurb}>
-                <Typography variant="body1">
-                    Badgerer handles the book keeping around badgework and attendance. You'll no longer have to update your records for all scouts that,
-                    attended. Instead, you just submit who attended and what badgework items were completed - badgerer handles the rest!
-                </Typography>
-            </Box>
         </div>
-    );
+    )
 }
 
 export default App;
